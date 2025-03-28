@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mikrotik Burst Limit Calculator</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .result {
+        font-family: monospace;
+        font-size: 1.2rem;
+        padding: 10px;
+        background: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container mt-5">
+      <h1 class="text-center mb-4">Mikrotik Burst Limit Calculator</h1>
+      <form id="burstCalculatorForm">
+        <div class="row mb-3">
+          <div class="col">
+            <h4>Upload</h4>
+            <div class="mb-3">
+              <label class="form-label">Max Limit (K/M):</label>
+              <input
+                type="text"
+                id="uploadMaxLimit"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Burst Limit (K/M):</label>
+              <input
+                type="text"
+                id="uploadBurstLimit"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Burst Time (s):</label>
+              <input
+                type="number"
+                id="uploadBurstTime"
+                class="form-control"
+                required
+              />
+            </div>
+          </div>
+          <div class="col">
+            <h4>Download</h4>
+            <div class="mb-3">
+              <label class="form-label">Max Limit (K/M):</label>
+              <input
+                type="text"
+                id="downloadMaxLimit"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Burst Limit (K/M):</label>
+              <input
+                type="text"
+                id="downloadBurstLimit"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Burst Time (s):</label>
+              <input
+                type="number"
+                id="downloadBurstTime"
+                class="form-control"
+                required
+              />
+            </div>
+          </div>
+        </div>
+        <div class="text-center">
+          <button type="submit" class="btn btn-primary">Calculate</button>
+        </div>
+      </form>
+      <div class="result mt-4" id="result"></div>
+    </div>
+
+    <script>
+      document
+        .getElementById("burstCalculatorForm")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+
+          // Ambil input
+          const uploadMaxLimit =
+            document.getElementById("uploadMaxLimit").value;
+          const uploadBurstLimit =
+            document.getElementById("uploadBurstLimit").value;
+          const uploadBurstTime =
+            document.getElementById("uploadBurstTime").value;
+          const downloadMaxLimit =
+            document.getElementById("downloadMaxLimit").value;
+          const downloadBurstLimit =
+            document.getElementById("downloadBurstLimit").value;
+          const downloadBurstTime =
+            document.getElementById("downloadBurstTime").value;
+
+          // Hitung Burst Threshold dengan formula baru
+          const uploadBurstThreshold = calculateThreshold(
+            uploadMaxLimit,
+            uploadBurstLimit
+          );
+          const downloadBurstThreshold = calculateThreshold(
+            downloadMaxLimit,
+            downloadBurstLimit
+          );
+
+          // Hitung Actual Burst Time
+          const uploadActualBurstTime = Math.round(
+            (uploadBurstThreshold.value * uploadBurstTime) /
+              parseFloat(uploadBurstLimit)
+          );
+          const downloadActualBurstTime = Math.round(
+            (downloadBurstThreshold.value * downloadBurstTime) /
+              parseFloat(downloadBurstLimit)
+          );
+
+          // Format hasil output
+          const resultString = [
+            `${uploadMaxLimit}/${downloadMaxLimit}`,
+            `${uploadBurstLimit}/${downloadBurstLimit}`,
+            `${formatWithUnit(
+              uploadBurstThreshold.value,
+              uploadBurstThreshold.unit
+            )}/${formatWithUnit(
+              downloadBurstThreshold.value,
+              downloadBurstThreshold.unit
+            )}`,
+            `${uploadBurstTime}/${downloadBurstTime}`,
+            `${uploadActualBurstTime}`,
+            `${formatWithUnit(
+              uploadBurstThreshold.value * 0.67,
+              uploadBurstThreshold.unit
+            )}/${formatWithUnit(
+              downloadBurstThreshold.value * 0.67,
+              downloadBurstThreshold.unit
+            )}`,
+          ].join(" ");
+
+          // Tampilkan hasil dalam satu baris
+          document.getElementById("result").textContent = resultString
+            .replace(/\s+/g, " ")
+            .trim();
+        });
+
+      function calculateThreshold(maxLimit, burstLimit) {
+        const numMax = parseFloat(maxLimit);
+        const numBurst = parseFloat(burstLimit);
+        const unit = maxLimit.toUpperCase().includes("M") ? "M" : "K";
+
+        // Gunakan formula yang lebih sesuai (70% dari max limit jika burst lebih besar)
+        const threshold = numBurst > numMax ? numMax * 0.65 : numMax * 0.75;
+
+        return { value: Math.round(threshold), unit };
+      }
+
+      function formatWithUnit(value, unit) {
+        return `${Math.round(value)}${unit}`;
+      }
+    </script>
+  </body>
+</html>
